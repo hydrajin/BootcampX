@@ -49,6 +49,7 @@ So someone should be able to run the application with the following command:
 // EX: node students.js JU 6
 // Gives 6 students from cohort JUN04
 
+/*
 pool.query(`
 SELECT students.id as student_id, students.name as name, cohorts.name as cohort
 FROM students
@@ -56,6 +57,37 @@ JOIN cohorts ON cohorts.id = cohort_id
 WHERE cohorts.name LIKE '%${process.argv[2]}%'
 LIMIT ${process.argv[3] || 5};
 `)
+  .then(res => {
+    res.rows.forEach(user => {
+      console.log(`${user.name} has an id of ${user.student_id} and was in the ${user.cohort} cohort`);
+    });
+  }).catch(err => console.error('query error', err.stack));
+*/
+
+//! Update students.js and teachers.js to use parameterized queries.
+//pool.query(queryString, values);
+
+// In our applications, we will separate out our SQL into two different parts.
+//~ 1. The part that we write as the developer, the part that we have complete control over.
+//? 2. The part that comes from somewhere else and might be malicious.
+
+//~ 1. The part that we write as the developer, the part that we have complete control over.
+const queryString = `
+  SELECT students.id as student_id, students.name as name, cohorts.name as cohort
+  FROM students
+  JOIN cohorts ON cohorts.id = cohort_id
+  WHERE cohorts.name LIKE $1
+  LIMIT $2;
+  `;
+
+//? 2. The part that comes from somewhere else and might be malicious.
+const cohortName = process.argv[2];
+const limit = process.argv[3] || 5;
+// Store all potentially malicious values in an array.
+const values = [`%${cohortName}%`, limit];
+
+//QUERY
+pool.query(queryString, values)
   .then(res => {
     res.rows.forEach(user => {
       console.log(`${user.name} has an id of ${user.student_id} and was in the ${user.cohort} cohort`);
